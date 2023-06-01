@@ -1,7 +1,7 @@
 import axios from "@/lib/axios";
+import useSWR from "swr";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import useSWR from "swr";
 
 export const useAuth = ({ middleware, redirectIfAuthenticated } = {}) => {
   const router = useRouter();
@@ -9,23 +9,24 @@ export const useAuth = ({ middleware, redirectIfAuthenticated } = {}) => {
   // isloading
   // const [isLoading, setIsLoading] = useState(1);
 
-  // csrf
-  const csrf = () => axios.get("/sanctum/csrf-cookie");
-
   // user
   const {
     data: user,
     error,
     mutate,
-  } = useSWR("/api/v1/user", () => {
+  } = useSWR("/api/v1/user", () =>
     axios
       .get("/api/v1/user")
-      .then((response) => response.data.data)
+      .then((response) => response.data)
       .catch((error) => {
         if (error.response.status !== 409) throw error;
+
         router.push("/verify-email");
-      });
-  });
+      })
+  );
+
+  // csrf
+  const csrf = () => axios.get("/sanctum/csrf-cookie");
 
   // login
   const login = async ({ setErrors, setStatus, ...props }) => {
@@ -104,8 +105,7 @@ export const useAuth = ({ middleware, redirectIfAuthenticated } = {}) => {
   };
 
   useEffect(() => {
-    // if(user || error)
-    //   setIsLoading(0);
+    // if (user || error) setIsLoading(0);
     if (middleware === "guest" && redirectIfAuthenticated && user)
       router.push(redirectIfAuthenticated);
     if (window.location.pathname === "/verify-email" && user?.email_verified_at)
@@ -114,7 +114,7 @@ export const useAuth = ({ middleware, redirectIfAuthenticated } = {}) => {
   }, [user, error]);
 
   return {
-    isLoading,
+    // isLoading,
     csrf,
     user,
     login,
