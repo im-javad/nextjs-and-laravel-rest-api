@@ -1,6 +1,9 @@
+import { useAuth } from "@/hooks/auth";
 import Link from "next/link";
 
 const Links = () => {
+  const { user, logout } = useAuth();
+
   return (
     <ul className="menu menu-horizontal px-1">
       <li>
@@ -8,7 +11,7 @@ const Links = () => {
       </li>
       <li tabIndex={0}>
         <Link href="#">
-          Parent
+          Auth
           <svg
             className="fill-current"
             xmlns="http://www.w3.org/2000/svg"
@@ -20,12 +23,15 @@ const Links = () => {
           </svg>
         </Link>
         <ul className="p-2 bg-base-100">
-          <li>
-            <Link href="#">Submenu 1</Link>
-          </li>
-          <li>
-            <Link href="#">Submenu 2</Link>
-          </li>
+          {user ? (
+            <li>
+              <a href="#" onClick={logout}>Logout</a>
+            </li>
+          ) : (
+            <li>
+              <Link href="/login">Login</Link>
+            </li>
+          )}
         </ul>
       </li>
       <li>

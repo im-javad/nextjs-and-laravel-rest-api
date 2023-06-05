@@ -7,16 +7,16 @@ export const useAuth = ({ middleware, redirectIfAuthenticated } = {}) => {
   const router = useRouter();
 
   // isloading
-  // const [isLoading, setIsLoading] = useState(1);
+  const [isLoading, setIsLoading] = useState(1);
 
   // user
   const {
     data: user,
     error,
     mutate,
-  } = useSWR("/api/v1/user", () =>
+  } = useSWR("/api/V1/user", () =>
     axios
-      .get("/api/v1/user")
+      .get("/api/V1/user")
       .then((response) => response.data)
       .catch((error) => {
         if (error.response.status !== 409) throw error;
@@ -28,30 +28,6 @@ export const useAuth = ({ middleware, redirectIfAuthenticated } = {}) => {
   // csrf
   const csrf = () => axios.get("/sanctum/csrf-cookie");
 
-  // login
-  const login = async ({ setErrors, setStatus, ...props }) => {
-    await csrf();
-
-    setErrors([]);
-    setStatus(null);
-
-    axios
-      .post("/login", ...props)
-      .then(() => mutate())
-      .catch((error) => {
-        if (error.response.status !== 422) throw error;
-
-        setErrors(error.response.data.error);
-      });
-  };
-
-  // logout
-  const logout = async () => {
-    if (!error) await axios.post("/logout").then(() => mutate());
-
-    window.location.pathname = "/login";
-  };
-
   const register = async ({ setErrors, ...props }) => {
     await csrf();
 
@@ -62,6 +38,22 @@ export const useAuth = ({ middleware, redirectIfAuthenticated } = {}) => {
       .then(() => mutate())
       .catch((error) => {
         if (error.response.status !== 422) throw error;
+        setErrors(error.response.data.errors);
+      });
+  };
+
+  // login
+  const login = async ({ setErrors, ...props }) => {
+    setErrors([]);
+
+    await csrf();
+
+    axios
+      .post("/login", props)
+      .then(() => mutate() && router.push("/dashboard"))
+      .catch((error) => {
+        if (error.response.status != 422) throw error;
+
         setErrors(error.response.data.errors);
       });
   };
@@ -104,8 +96,15 @@ export const useAuth = ({ middleware, redirectIfAuthenticated } = {}) => {
       .then((response) => setStatus(response.data.status));
   };
 
+  // logout
+  const logout = async () => {
+    if (!error) await axios.post("/logout").then(() => mutate());
+
+    window.location.pathname = "/login";
+  };
+
   useEffect(() => {
-    // if (user || error) setIsLoading(0);
+    if (user || error) setIsLoading(0);
     if (middleware === "guest" && redirectIfAuthenticated && user)
       router.push(redirectIfAuthenticated);
     if (window.location.pathname === "/verify-email" && user?.email_verified_at)
@@ -114,7 +113,7 @@ export const useAuth = ({ middleware, redirectIfAuthenticated } = {}) => {
   }, [user, error]);
 
   return {
-    // isLoading,
+    isLoading,
     csrf,
     user,
     login,
